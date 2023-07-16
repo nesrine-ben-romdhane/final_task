@@ -3,11 +3,12 @@ const asyncHandler = require("express-async-handler");
 const user = require("../model/user");
 
 const getalluser = asyncHandler(async(req,res)=>{
-    const User = await user.find().lean()
-    if (!User?.length){
+    const Users = await user.find().select('-password').lean()
+    
+    if (!Users?.length){
         return(res.status(400).json({message:'No users found'}))
     }
-    res.status(200).json(User)
+    res.status(200).json(Users)
 })
 
 
@@ -17,10 +18,11 @@ const createNewuser = asyncHandler(async(req,res)=>{
         return res.status(400).json({ message: 'All fields are required' })
     }
     const duplicate = await user.findOne({username}).collation({ locale: 'en', strength: 2 }).lean().exec()
-  if (duplicate !== null) {
+  if (duplicate) {
     return res.status(409).json({ message: 'Duplicate user' })
   }
-  const userObject = { username, password,Roles }
+  const hashedPwd = await bcrypt.hash(password, 10) // salt rounds
+  const userObject = { username, password:hashedPwd,Roles }
   const newUser = await user.create(userObject)
   if ( newUser) { 
     return res.status(201).json({ message: 'New user created' })

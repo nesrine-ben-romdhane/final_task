@@ -4,7 +4,7 @@ module.exports = app => {
   
     var router = require("express").Router();
     router.post("/login",auth.login);
-    router.delete("/logout",authuser,auth.logout)
-    router.post("/refresh",authuser,auth.refresh)
+    router.post("/logout",auth.logout)
+    router.get("/refresh",auth.refresh)
      app.use('/auth', router);
 }
