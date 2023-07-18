@@ -1,24 +1,24 @@
 const jwt = require('jsonwebtoken')
-const User = require('../model/user')
 
-const auth = async(req,res,next) =>{
-    try{
-        const token = req.header('Authorization').replace('Bearer ','')
-        console.log(token)
-        const decode = jwt.verify(token,'nesrine20')
-        console.log(decode)
+const verifyJWT = (req, res, next) => {
+  const authHeader = req.headers.authorization || req.headers.Authorization
 
-       
-        const user = await User.findOne({_id:decode._id,tokens:token})
-        console.log(user)
-        if(!user){
-            throw new Error()
-        }
-        req.user = user
-        req.token = token
-        next()
+  if (!authHeader?.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Unauthorized' })
+  }
+
+  const token = authHeader.split(' ')[1]
+
+  jwt.verify(
+    token,
+    process.env.ACCESS_TOKEN_SECRET,
+    (err, decoded) => {
+      if (err) return res.status(403).json({ message: 'Forbidden' })
+      req.user = decoded.UserInfo.username
+      req.roles = decoded.UserInfo.roles
+      next()
     }
-    catch(e){
-        res.status(401).send(e)
-    }
+  )
 }
+
+module.exports = verifyJWT
